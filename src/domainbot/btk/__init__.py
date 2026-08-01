@@ -1,0 +1,1 @@
+"""BTK availability checks."""

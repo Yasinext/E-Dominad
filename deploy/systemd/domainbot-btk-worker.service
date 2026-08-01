@@ -1,0 +1,24 @@
+[Unit]
+Description=DomainBot BTK Worker Service
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=domainbot
+Group=domainbot
+WorkingDirectory=/opt/domainbot/app
+EnvironmentFile=/etc/domainbot/domainbot.env
+ExecStart=/opt/domainbot/venv/bin/python -m domainbot.main_btk_worker
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/domainbot
+
+[Install]
+WantedBy=multi-user.target
