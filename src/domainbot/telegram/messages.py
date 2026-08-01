@@ -28,3 +28,24 @@ def query_accepted(plan: ScanJobPlan) -> str:
         f"Aralık: {plan.range_start}-{plan.range_end}\n"
         f"Toplam: {plan.total_count}"
     )
+
+
+def pool_domain_refresh_started(domain_count: int, job_count: int, already_running: bool) -> str:
+    if already_running:
+        return "Havuz domain güncellemesi zaten arka planda çalışıyor."
+    if domain_count == 0:
+        return "Havuzda güncellenecek domain bulunamadı."
+    return (
+        "Havuz domain güncellemesi arka planda başlatıldı.\n"
+        f"Domain: {domain_count}\n"
+        f"Parça: {job_count}"
+    )
+
+
+def pool_btk_refresh_started(domain_count: int) -> str:
+    if domain_count == 0:
+        return "BTK için güncellenecek domain bulunamadı."
+    return (
+        "Havuz BTK güncellemesi arka planda başlatıldı.\n"
+        f"Domain: {domain_count}"
+    )

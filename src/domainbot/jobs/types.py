@@ -13,6 +13,7 @@ class ScanJobStatus(StrEnum):
 class ScanJobType(StrEnum):
     SINGLE = "single"
     RANGE = "range"
+    POOL_REFRESH = "pool_refresh"
 
 
 class ScanJobDomainOutcome(StrEnum):

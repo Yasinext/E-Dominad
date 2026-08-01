@@ -30,3 +30,5 @@ def test_build_range_job_plan_preserves_width() -> None:
 def test_rejects_non_scan_commands() -> None:
     with pytest.raises(ValueError):
         build_scan_job_plan(parse_command("/rapor_genel"))
+    with pytest.raises(ValueError):
+        build_scan_job_plan(parse_command("/havuz_domain_guncelle"))

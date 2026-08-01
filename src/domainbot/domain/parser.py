@@ -26,6 +26,8 @@ class CommandType(StrEnum):
     UNWATCH_SINGLE = "unwatch_single"
     UNWATCH_RANGE = "unwatch_range"
     LIST_WATCHES = "list_watches"
+    POOL_DOMAIN_REFRESH = "pool_domain_refresh"
+    POOL_BTK_REFRESH = "pool_btk_refresh"
 
 
 class ReportFilter(StrEnum):
@@ -103,6 +105,10 @@ def parse_command(
             return _parse_unwatch(args, max_watch_domains or max_domains)
         if command == "takipler" and not args:
             return ParsedCommand(CommandType.LIST_WATCHES)
+        if command == "havuz_domain_guncelle" and not args:
+            return ParsedCommand(CommandType.POOL_DOMAIN_REFRESH)
+        if command == "havuz_btk_guncelle" and not args:
+            return ParsedCommand(CommandType.POOL_BTK_REFRESH)
     except ValidationError as exc:
         raise ParseError(exc.code, _usage_for(command)) from exc
 
@@ -222,11 +228,13 @@ def _usage_for(command: str) -> str:
         ),
         "takip_durdur": "/takip_durdur <domain.com> veya /takip_durdur <kok> <baslangic>-<bitis>",
         "takipler": "/takipler",
+        "havuz_domain_guncelle": "/havuz_domain_guncelle",
+        "havuz_btk_guncelle": "/havuz_btk_guncelle",
     }.get(command, _valid_commands())
 
 
 def _valid_commands() -> str:
     return (
         "/sorgu, /rapor, /rapor_genel, /takip, /takipler, "
-        "/takip_durdur"
+        "/takip_durdur, /havuz_domain_guncelle, /havuz_btk_guncelle"
     )

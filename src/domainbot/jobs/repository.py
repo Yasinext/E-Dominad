@@ -310,6 +310,8 @@ async def _completion_outbox(
 ) -> TelegramOutbox | None:
     if job.job_type == "watch":
         return await _watch_completed_outbox(session, job, now)
+    if job.job_type == "pool_refresh":
+        return None
     return _scan_completed_outbox(job, now)
 
 

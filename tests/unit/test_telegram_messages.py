@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from domainbot.domain.parser import parse_command
 from domainbot.jobs.planner import build_scan_job_plan
-from domainbot.telegram.messages import invalid_command, query_accepted
+from domainbot.telegram.messages import (
+    invalid_command,
+    pool_btk_refresh_started,
+    pool_domain_refresh_started,
+    query_accepted,
+)
 from domainbot.telegram.permissions import is_allowed_chat
 
 
@@ -26,6 +31,23 @@ def test_query_accepted_range() -> None:
 def test_invalid_command_message() -> None:
     assert invalid_command("/sorgu <domain.com>") == (
         "Komut geçersiz.\nKullanım: /sorgu <domain.com>"
+    )
+
+
+def test_pool_domain_refresh_started_message() -> None:
+    assert pool_domain_refresh_started(500, 2, already_running=False) == (
+        "Havuz domain güncellemesi arka planda başlatıldı.\n"
+        "Domain: 500\n"
+        "Parça: 2"
+    )
+    assert pool_domain_refresh_started(0, 1, already_running=True) == (
+        "Havuz domain güncellemesi zaten arka planda çalışıyor."
+    )
+
+
+def test_pool_btk_refresh_started_message() -> None:
+    assert pool_btk_refresh_started(500) == (
+        "Havuz BTK güncellemesi arka planda başlatıldı.\nDomain: 500"
     )
 
 

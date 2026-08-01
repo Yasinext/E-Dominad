@@ -108,6 +108,20 @@ def test_parse_unwatch_commands() -> None:
     assert ranged.command_type == CommandType.UNWATCH_RANGE
 
 
+def test_parse_pool_refresh_commands() -> None:
+    domain_refresh = parse_command("/havuz_domain_guncelle")
+    btk_refresh = parse_command("/havuz_btk_guncelle")
+
+    assert domain_refresh.command_type == CommandType.POOL_DOMAIN_REFRESH
+    assert btk_refresh.command_type == CommandType.POOL_BTK_REFRESH
+
+
+def test_pool_refresh_commands_reject_arguments() -> None:
+    for text in ("/havuz_domain_guncelle now", "/havuz_btk_guncelle all"):
+        with pytest.raises(ParseError):
+            parse_command(text)
+
+
 def test_removed_commands_are_rejected() -> None:
     for text in ("/yardim", "/durum", "/takip-sil example.com", "/takip-durdur example.com"):
         with pytest.raises(ParseError):

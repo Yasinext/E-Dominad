@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     max_domains_per_watch: int = 5000
     max_active_jobs_per_group: int = 1
     max_active_jobs_per_user: int = 1
+    pool_domain_refresh_batch_size: int = 250
     report_message_row_limit: int = 20
 
     watch_timezone: str = "Europe/Istanbul"

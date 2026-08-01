@@ -10,6 +10,7 @@ from domainbot.config import Settings
 from domainbot.domain.parser import CommandType, ParseError, parse_command
 from domainbot.jobs.planner import build_scan_job_plan
 from domainbot.jobs.service import ScanJobService
+from domainbot.pool.service import PoolRefreshService
 from domainbot.reports.excel import (
     safe_general_report_filename,
     safe_report_filename,
@@ -20,6 +21,8 @@ from domainbot.reports.text import render_text_report
 from domainbot.telegram.messages import (
     command_not_ready,
     invalid_command,
+    pool_btk_refresh_started,
+    pool_domain_refresh_started,
     query_accepted,
     report_not_found,
     unauthorized_group,
@@ -164,16 +167,47 @@ async def handle_message(
         await message.answer(render_watchlists(items))
         return
 
+    if parsed.command_type == CommandType.POOL_DOMAIN_REFRESH:
+        user = message.from_user
+        if user is None:
+            await message.answer(command_not_ready())
+            return
+        pool_service = PoolRefreshService()
+        async with session_factory() as session:
+            async with session.begin():
+                result = await pool_service.enqueue_domain_refresh(
+                    session=session,
+                    chat_id=message.chat.id,
+                    requested_by=user.id,
+                    batch_size=settings.pool_domain_refresh_batch_size,
+                )
+        await message.answer(
+            pool_domain_refresh_started(
+                result.domain_count,
+                result.job_count,
+                result.already_running,
+            )
+        )
+        return
+
+    if parsed.command_type == CommandType.POOL_BTK_REFRESH:
+        pool_service = PoolRefreshService()
+        async with session_factory() as session:
+            async with session.begin():
+                domain_count = await pool_service.enqueue_btk_refresh(session)
+        await message.answer(pool_btk_refresh_started(domain_count))
+        return
+
     if parsed.command_type in {CommandType.QUERY_SINGLE, CommandType.QUERY_RANGE}:
         user = message.from_user
         if user is None:
             await message.answer(command_not_ready())
             return
         scan_plan = build_scan_job_plan(parsed)
-        service = ScanJobService()
+        scan_service = ScanJobService()
         async with session_factory() as session:
             async with session.begin():
-                await service.create_from_command(
+                await scan_service.create_from_command(
                     session=session,
                     parsed=parsed,
                     chat_id=message.chat.id,
