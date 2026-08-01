@@ -4,11 +4,18 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import cast
 
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from domainbot.db.models import Domain, ScanJob
+from domainbot.db.models import (
+    Domain,
+    DomainCheck,
+    DomainStatusChange,
+    ScanJob,
+    ScanJobDomain,
+    Watchlist,
+)
 from domainbot.jobs.planner import ScanJobPlan
 from domainbot.jobs.repository import ScanJobRepository
 from domainbot.jobs.types import ScanJobStatus, ScanJobType
@@ -19,6 +26,13 @@ class PoolRefreshResult:
     domain_count: int
     job_count: int
     already_running: bool = False
+
+
+@dataclass(frozen=True)
+class PoolDeleteResult:
+    requested_count: int
+    deleted_count: int
+    deactivated_watch_count: int
 
 
 class PoolRefreshService:
@@ -76,6 +90,68 @@ class PoolRefreshService:
         cursor_result = cast(CursorResult[object], result)
         return int(cursor_result.rowcount or 0)
 
+    async def delete_domains(
+        self,
+        session: AsyncSession,
+        domains: tuple[str, ...],
+        chat_id: int,
+    ) -> PoolDeleteResult:
+        if not domains:
+            return PoolDeleteResult(
+                requested_count=0,
+                deleted_count=0,
+                deactivated_watch_count=0,
+            )
+        domain_ids = tuple(
+            await session.scalars(select(Domain.id).where(Domain.domain.in_(domains)))
+        )
+        deactivated_watch_count = await self._deactivate_matching_single_watchlists(
+            session,
+            domains,
+            chat_id,
+        )
+        if not domain_ids:
+            return PoolDeleteResult(
+                requested_count=len(domains),
+                deleted_count=0,
+                deactivated_watch_count=deactivated_watch_count,
+            )
+
+        await session.execute(delete(DomainCheck).where(DomainCheck.domain_id.in_(domain_ids)))
+        await session.execute(
+            delete(DomainStatusChange).where(DomainStatusChange.domain_id.in_(domain_ids))
+        )
+        await session.execute(delete(ScanJobDomain).where(ScanJobDomain.domain_id.in_(domain_ids)))
+        result = await session.execute(delete(Domain).where(Domain.id.in_(domain_ids)))
+        cursor_result = cast(CursorResult[object], result)
+        return PoolDeleteResult(
+            requested_count=len(domains),
+            deleted_count=int(cursor_result.rowcount or 0),
+            deactivated_watch_count=deactivated_watch_count,
+        )
+
+    async def deactivate_exact_range_watchlist(
+        self,
+        session: AsyncSession,
+        chat_id: int,
+        root: str,
+        range_start: int,
+        range_end: int,
+    ) -> int:
+        result = await session.execute(
+            update(Watchlist)
+            .where(
+                Watchlist.chat_id == chat_id,
+                Watchlist.is_active.is_(True),
+                Watchlist.root == root,
+                Watchlist.range_start == range_start,
+                Watchlist.range_end == range_end,
+            )
+            .values(is_active=False, updated_at=datetime.now(UTC))
+        )
+        cursor_result = cast(CursorResult[object], result)
+        return int(cursor_result.rowcount or 0)
+
     async def _active_domain_refresh_count(self, session: AsyncSession, chat_id: int) -> int:
         count = await session.scalar(
             select(func.count())
@@ -87,6 +163,24 @@ class PoolRefreshService:
             )
         )
         return int(count or 0)
+
+    async def _deactivate_matching_single_watchlists(
+        self,
+        session: AsyncSession,
+        domains: tuple[str, ...],
+        chat_id: int,
+    ) -> int:
+        result = await session.execute(
+            update(Watchlist)
+            .where(
+                Watchlist.chat_id == chat_id,
+                Watchlist.is_active.is_(True),
+                Watchlist.single_domain.in_(domains),
+            )
+            .values(is_active=False, updated_at=datetime.now(UTC))
+        )
+        cursor_result = cast(CursorResult[object], result)
+        return int(cursor_result.rowcount or 0)
 
 
 def _chunks(values: tuple[str, ...], size: int) -> tuple[tuple[str, ...], ...]:

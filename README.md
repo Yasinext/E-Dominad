@@ -69,4 +69,6 @@ DATABASE_URL=postgresql+asyncpg://domainbot@127.0.0.1:5432/domainbot
 /takip_durdur <kok> <baslangic>-<bitis>
 /havuz_domain_guncelle
 /havuz_btk_guncelle
+/havuz_sil <domain.com>
+/havuz_sil <kok> <baslangic>-<bitis>
 ```

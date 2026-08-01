@@ -5,6 +5,7 @@ from domainbot.jobs.planner import build_scan_job_plan
 from domainbot.telegram.messages import (
     invalid_command,
     pool_btk_refresh_started,
+    pool_delete_completed,
     pool_domain_refresh_started,
     query_accepted,
 )
@@ -48,6 +49,15 @@ def test_pool_domain_refresh_started_message() -> None:
 def test_pool_btk_refresh_started_message() -> None:
     assert pool_btk_refresh_started(500) == (
         "Havuz BTK güncellemesi arka planda başlatıldı.\nDomain: 500"
+    )
+
+
+def test_pool_delete_completed_message() -> None:
+    assert pool_delete_completed(5, 4, 1) == (
+        "Havuz silme tamamlandı.\n"
+        "İstenen: 5\n"
+        "Silinen: 4\n"
+        "Pasife alınan takip: 1"
     )
 
 

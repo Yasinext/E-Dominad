@@ -22,6 +22,7 @@ from domainbot.telegram.messages import (
     command_not_ready,
     invalid_command,
     pool_btk_refresh_started,
+    pool_delete_completed,
     pool_domain_refresh_started,
     query_accepted,
     report_not_found,
@@ -196,6 +197,33 @@ async def handle_message(
             async with session.begin():
                 domain_count = await pool_service.enqueue_btk_refresh(session)
         await message.answer(pool_btk_refresh_started(domain_count))
+        return
+
+    if parsed.command_type in {CommandType.POOL_DELETE_SINGLE, CommandType.POOL_DELETE_RANGE}:
+        pool_service = PoolRefreshService()
+        async with session_factory() as session:
+            async with session.begin():
+                delete_result = await pool_service.delete_domains(
+                    session=session,
+                    domains=parsed.domains(),
+                    chat_id=message.chat.id,
+                )
+                deactivated_watch_count = delete_result.deactivated_watch_count
+                if parsed.root is not None and parsed.numeric_range is not None:
+                    deactivated_watch_count += await pool_service.deactivate_exact_range_watchlist(
+                        session=session,
+                        chat_id=message.chat.id,
+                        root=parsed.root,
+                        range_start=parsed.numeric_range.start,
+                        range_end=parsed.numeric_range.end,
+                    )
+        await message.answer(
+            pool_delete_completed(
+                delete_result.requested_count,
+                delete_result.deleted_count,
+                deactivated_watch_count,
+            )
+        )
         return
 
     if parsed.command_type in {CommandType.QUERY_SINGLE, CommandType.QUERY_RANGE}:

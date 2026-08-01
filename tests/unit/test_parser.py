@@ -116,8 +116,24 @@ def test_parse_pool_refresh_commands() -> None:
     assert btk_refresh.command_type == CommandType.POOL_BTK_REFRESH
 
 
+def test_parse_pool_delete_commands() -> None:
+    single = parse_command("/havuz_sil example.com")
+    ranged = parse_command("/havuz_sil marka 01-03", max_watch_domains=5000)
+
+    assert single.command_type == CommandType.POOL_DELETE_SINGLE
+    assert single.domains() == ("example.com",)
+    assert ranged.command_type == CommandType.POOL_DELETE_RANGE
+    assert ranged.domains() == ("marka01.com", "marka02.com", "marka03.com")
+
+
 def test_pool_refresh_commands_reject_arguments() -> None:
     for text in ("/havuz_domain_guncelle now", "/havuz_btk_guncelle all"):
+        with pytest.raises(ParseError):
+            parse_command(text)
+
+
+def test_pool_delete_rejects_invalid_arguments() -> None:
+    for text in ("/havuz_sil", "/havuz_sil marka 1-2 extra"):
         with pytest.raises(ParseError):
             parse_command(text)
 

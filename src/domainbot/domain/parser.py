@@ -28,6 +28,8 @@ class CommandType(StrEnum):
     LIST_WATCHES = "list_watches"
     POOL_DOMAIN_REFRESH = "pool_domain_refresh"
     POOL_BTK_REFRESH = "pool_btk_refresh"
+    POOL_DELETE_SINGLE = "pool_delete_single"
+    POOL_DELETE_RANGE = "pool_delete_range"
 
 
 class ReportFilter(StrEnum):
@@ -109,6 +111,8 @@ def parse_command(
             return ParsedCommand(CommandType.POOL_DOMAIN_REFRESH)
         if command == "havuz_btk_guncelle" and not args:
             return ParsedCommand(CommandType.POOL_BTK_REFRESH)
+        if command == "havuz_sil":
+            return _parse_pool_delete(args, max_watch_domains or max_domains)
     except ValidationError as exc:
         raise ParseError(exc.code, _usage_for(command)) from exc
 
@@ -197,6 +201,17 @@ def _parse_unwatch(args: list[str], max_domains: int) -> ParsedCommand:
     raise ParseError("invalid_unwatch", _usage_for("takip_durdur"))
 
 
+def _parse_pool_delete(args: list[str], max_domains: int) -> ParsedCommand:
+    if len(args) == 1:
+        return ParsedCommand(CommandType.POOL_DELETE_SINGLE, domain=normalize_domain(args[0]))
+    if len(args) == 2:
+        root = normalize_domain_root(args[0])
+        numeric_range = _parse_range(args[1], max_domains)
+        _validate_range_domains(root, numeric_range)
+        return ParsedCommand(CommandType.POOL_DELETE_RANGE, root=root, numeric_range=numeric_range)
+    raise ParseError("invalid_pool_delete", _usage_for("havuz_sil"))
+
+
 def _parse_range(raw: str, max_domains: int) -> NumericRange:
     match = RANGE_RE.fullmatch(raw)
     if not match:
@@ -230,11 +245,12 @@ def _usage_for(command: str) -> str:
         "takipler": "/takipler",
         "havuz_domain_guncelle": "/havuz_domain_guncelle",
         "havuz_btk_guncelle": "/havuz_btk_guncelle",
+        "havuz_sil": "/havuz_sil <domain.com> veya /havuz_sil <kok> <baslangic>-<bitis>",
     }.get(command, _valid_commands())
 
 
 def _valid_commands() -> str:
     return (
         "/sorgu, /rapor, /rapor_genel, /takip, /takipler, "
-        "/takip_durdur, /havuz_domain_guncelle, /havuz_btk_guncelle"
+        "/takip_durdur, /havuz_domain_guncelle, /havuz_btk_guncelle, /havuz_sil"
     )
