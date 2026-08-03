@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from domainbot.btk.types import BtkResult, BtkStatus
 from domainbot.db.models import Domain
+from domainbot.domain.status import DomainStatus
 
 
 class BtkRepository:
@@ -21,6 +22,7 @@ class BtkRepository:
             select(Domain)
             .where(
                 Domain.last_checked_at.is_not(None),
+                Domain.current_verified_status == DomainStatus.REGISTERED.value,
                 or_(
                     Domain.btk_status.is_(None),
                     and_(

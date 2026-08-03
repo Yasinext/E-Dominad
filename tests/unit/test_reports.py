@@ -145,7 +145,7 @@ def test_write_excel_report_creates_expected_sheets(tmp_path) -> None:  # type: 
     assert workbook["Genel Rapor"]["L2"].value == (
         "Domain kayıtlı; registry tarafında nameserver bilgisi var."
     )
-    assert workbook["Genel Rapor"]["K3"].value == "Bekliyor"
+    assert workbook["Genel Rapor"]["K3"].value == "Domain kayıtlı değil"
     assert workbook["Genel Rapor"]["K4"].value == "Kontrol sürüyor"
 
 

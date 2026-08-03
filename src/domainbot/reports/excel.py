@@ -107,6 +107,8 @@ def _simple_explanation(row: ReportRow) -> str:
 
 
 def _btk_label(row: ReportRow) -> str:
+    if row.verified_status == "NOT_FOUND_IN_REGISTRY":
+        return "Domain kayıtlı değil"
     if row.btk_status is None:
         return "Bekliyor"
     if row.btk_status == "blocked":
