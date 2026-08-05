@@ -40,14 +40,14 @@ class Settings(BaseSettings):
     watch_daily_batch_size: int = 300
 
     btk_base_url: str = "https://btk.monoworks.net"
-    btk_batch_size: int = 25
+    btk_batch_size: int = 5
     btk_idle_sleep_seconds: float = 30.0
-    btk_batch_sleep_seconds: float = 5.0
+    btk_batch_sleep_seconds: float = 10.0
     btk_retry_interval_seconds: float = 21600.0
-    btk_connect_timeout_seconds: float = 10.0
-    btk_read_timeout_seconds: float = 30.0
+    btk_connect_timeout_seconds: float = 15.0
+    btk_read_timeout_seconds: float = 90.0
     btk_write_timeout_seconds: float = 10.0
-    btk_pool_timeout_seconds: float = 10.0
+    btk_pool_timeout_seconds: float = 20.0
     btk_user_agent: str = ""
 
     temp_report_dir: Path = Path("/var/lib/domainbot/reports")
