@@ -195,8 +195,10 @@ async def handle_message(
         pool_service = PoolRefreshService()
         async with session_factory() as session:
             async with session.begin():
-                domain_count = await pool_service.enqueue_btk_refresh(session)
-        await message.answer(pool_btk_refresh_started(domain_count))
+                btk_result = await pool_service.enqueue_btk_refresh(session)
+        await message.answer(
+            pool_btk_refresh_started(btk_result.domain_count, btk_result.already_running)
+        )
         return
 
     if parsed.command_type in {CommandType.POOL_DELETE_SINGLE, CommandType.POOL_DELETE_RANGE}:

@@ -50,6 +50,10 @@ def test_pool_btk_refresh_started_message() -> None:
     assert pool_btk_refresh_started(500) == (
         "Havuz BTK güncellemesi arka planda başlatıldı.\nDomain: 500"
     )
+    assert pool_btk_refresh_started(12, already_running=True) == (
+        "Havuz BTK güncellemesi zaten arka planda çalışıyor.\n"
+        "Bekleyen domain: 12"
+    )
 
 
 def test_pool_delete_completed_message() -> None:

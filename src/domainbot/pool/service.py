@@ -29,6 +29,12 @@ class PoolRefreshResult:
 
 
 @dataclass(frozen=True)
+class PoolBtkRefreshResult:
+    domain_count: int
+    already_running: bool = False
+
+
+@dataclass(frozen=True)
 class PoolDeleteResult:
     requested_count: int
     deleted_count: int
@@ -75,10 +81,17 @@ class PoolRefreshService:
             job_count += 1
         return PoolRefreshResult(domain_count=len(domains), job_count=job_count)
 
-    async def enqueue_btk_refresh(self, session: AsyncSession) -> int:
+    async def enqueue_btk_refresh(self, session: AsyncSession) -> PoolBtkRefreshResult:
+        active_count = await self._active_btk_refresh_count(session)
+        if active_count:
+            return PoolBtkRefreshResult(domain_count=active_count, already_running=True)
+
         result = await session.execute(
             update(Domain)
-            .where(Domain.last_checked_at.is_not(None))
+            .where(
+                Domain.last_checked_at.is_not(None),
+                Domain.current_verified_status == "REGISTERED",
+            )
             .values(
                 btk_status=None,
                 btk_checked_at=None,
@@ -88,7 +101,7 @@ class PoolRefreshService:
             )
         )
         cursor_result = cast(CursorResult[object], result)
-        return int(cursor_result.rowcount or 0)
+        return PoolBtkRefreshResult(domain_count=int(cursor_result.rowcount or 0))
 
     async def delete_domains(
         self,
@@ -160,6 +173,18 @@ class PoolRefreshService:
                 ScanJob.chat_id == chat_id,
                 ScanJob.job_type == ScanJobType.POOL_REFRESH.value,
                 ScanJob.status.in_([ScanJobStatus.QUEUED.value, ScanJobStatus.RUNNING.value]),
+            )
+        )
+        return int(count or 0)
+
+    async def _active_btk_refresh_count(self, session: AsyncSession) -> int:
+        count = await session.scalar(
+            select(func.count())
+            .select_from(Domain)
+            .where(
+                Domain.last_checked_at.is_not(None),
+                Domain.current_verified_status == "REGISTERED",
+                Domain.btk_status.is_(None),
             )
         )
         return int(count or 0)

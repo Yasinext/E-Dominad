@@ -42,7 +42,12 @@ def pool_domain_refresh_started(domain_count: int, job_count: int, already_runni
     )
 
 
-def pool_btk_refresh_started(domain_count: int) -> str:
+def pool_btk_refresh_started(domain_count: int, already_running: bool = False) -> str:
+    if already_running:
+        return (
+            "Havuz BTK güncellemesi zaten arka planda çalışıyor.\n"
+            f"Bekleyen domain: {domain_count}"
+        )
     if domain_count == 0:
         return "BTK için güncellenecek domain bulunamadı."
     return (
