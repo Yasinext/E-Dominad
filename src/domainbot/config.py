@@ -20,11 +20,12 @@ class Settings(BaseSettings):
 
     rdap_base_url: str = "https://rdap.verisign.com/com/v1"
     rdap_concurrency: int = 3
-    rdap_connect_timeout_seconds: float = 10.0
-    rdap_read_timeout_seconds: float = 20.0
+    rdap_connect_timeout_seconds: float = 15.0
+    rdap_read_timeout_seconds: float = 60.0
     rdap_write_timeout_seconds: float = 10.0
-    rdap_pool_timeout_seconds: float = 10.0
-    rdap_max_attempts: int = 3
+    rdap_pool_timeout_seconds: float = 20.0
+    rdap_max_attempts: int = 4
+    rdap_job_lease_seconds: int = 900
     rdap_user_agent: str = ""
 
     max_domains_per_command: int = 100

@@ -77,7 +77,7 @@ class PoolRefreshService:
                 requested_by=requested_by,
                 now=created_at,
             )
-            job.priority = 200
+            job.priority = 200 + job_count
             job_count += 1
         return PoolRefreshResult(domain_count=len(domains), job_count=job_count)
 

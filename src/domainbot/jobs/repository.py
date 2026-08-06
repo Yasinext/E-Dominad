@@ -202,6 +202,18 @@ class ScanJobRepository:
         else:
             job.unknown_count += 1
 
+    def renew_lease(
+        self,
+        job: ScanJob,
+        worker_id: str,
+        lease_seconds: int,
+        now: datetime | None = None,
+    ) -> None:
+        renewed_at = now or datetime.now(UTC)
+        job.locked_by = worker_id
+        job.locked_at = renewed_at
+        job.lease_expires_at = renewed_at + timedelta(seconds=lease_seconds)
+
     async def finish_if_complete(
         self,
         session: AsyncSession,

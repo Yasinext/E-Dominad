@@ -23,8 +23,12 @@ class WorkerSettings:
     idle_sleep_seconds: float = 5.0
 
     @classmethod
-    def default(cls) -> WorkerSettings:
-        return cls(worker_id=f"{socket.gethostname()}:domainbot-worker")
+    def default(cls, lease_seconds: int = 300, idle_sleep_seconds: float = 5.0) -> WorkerSettings:
+        return cls(
+            worker_id=f"{socket.gethostname()}:domainbot-worker",
+            lease_seconds=lease_seconds,
+            idle_sleep_seconds=idle_sleep_seconds,
+        )
 
 
 class ScanJobWorker:
@@ -85,6 +89,11 @@ class ScanJobWorker:
                     if refreshed_pending is None:
                         continue
                     await self.repository.record_result(session, job, refreshed_pending, result)
+                    self.repository.renew_lease(
+                        job,
+                        worker_id=self.settings.worker_id,
+                        lease_seconds=self.settings.lease_seconds,
+                    )
                     await self.repository.finish_if_complete(session, job)
 
     async def _refresh_pending(
