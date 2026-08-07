@@ -146,7 +146,7 @@ def test_write_excel_report_creates_expected_sheets(tmp_path) -> None:  # type: 
         "Domain kayıtlı; registry tarafında nameserver bilgisi var."
     )
     assert workbook["Genel Rapor"]["K3"].value == "Domain kayıtlı değil"
-    assert workbook["Genel Rapor"]["K4"].value == "Kontrol sürüyor"
+    assert workbook["Genel Rapor"]["K4"].value == "DNS çözülemedi"
 
 
 def test_safe_report_filename_sanitizes_root() -> None:

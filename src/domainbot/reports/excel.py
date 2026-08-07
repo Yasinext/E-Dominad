@@ -116,14 +116,23 @@ def _btk_label(row: ReportRow) -> str:
     if row.btk_status == "clear":
         return "Engelsiz"
     if row.btk_status == "suspect":
-        return "Kontrol sürüyor"
+        return "BTK şüpheli"
     if row.btk_status == "inconclusive":
-        return "Kontrol sürüyor"
+        return _btk_inconclusive_label(row)
     if row.btk_status == "dead":
-        return "Kontrol sürüyor"
+        return "BTK yanıt vermedi"
     if row.btk_status == "error":
-        return "Kontrol sürüyor"
-    return "Kontrol sürüyor"
+        return "BTK hata aldı"
+    return "BTK sonucu belirsiz"
+
+
+def _btk_inconclusive_label(row: ReportRow) -> str:
+    note = (row.btk_note or "").lower()
+    if "zaman" in note or "timeout" in note:
+        return "DNS zaman aşımı"
+    if "cozulemedi" in note or "çözülemedi" in note:
+        return "DNS çözülemedi"
+    return "BTK sonucu belirsiz"
 
 
 def _excel_text(value: object) -> str:
