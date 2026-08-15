@@ -7,6 +7,9 @@ from domainbot.reports.types import Report
 
 
 def render_text_report(report: Report, row_limit: int) -> str:
+    if report.root is None:
+        return _render_general_text_report(report, row_limit)
+
     title = "Genel rapor hazır." if report.root is None else "Rapor hazır."
     lines = [
         title,
@@ -18,10 +21,6 @@ def render_text_report(report: Report, row_limit: int) -> str:
         f"En yeni kontrol: {format_datetime_tr(report.newest_checked_at)}",
         "Kaynak: RDAP",
     ]
-    if report.root is None:
-        btk_checked = sum(1 for row in report.rows if row.btk_status is not None)
-        lines.insert(5, f"BTK kontrollü: {btk_checked}")
-        lines.insert(6, f"BTK kontrol bekleyen: {len(report.rows) - btk_checked}")
     if report.root is not None:
         lines.insert(1, f"Kök: {report.root}")
         lines.insert(2, f"Aralık: {report.range_start}-{report.range_end}")
@@ -36,6 +35,30 @@ def render_text_report(report: Report, row_limit: int) -> str:
             )
     else:
         lines.append("Detay için excel seçeneğini kullanın.")
+    return "\n".join(lines)
+
+
+def _render_general_text_report(report: Report, row_limit: int) -> str:
+    btk_checked = sum(1 for row in report.rows if row.btk_status is not None)
+    lines = [
+        "Genel rapor hazır.",
+        f"Havuzdaki Domain Sayısı: {len(report.rows)}",
+        f"Kayıtlı: {report.registered_count}",
+        f"Registry Kaydı Bulunmayan: {report.not_found_count}",
+        f"BTK kontrollü: {btk_checked}",
+        f"En eski kontrol: {format_datetime_tr(report.oldest_checked_at)}",
+        f"En yeni kontrol: {format_datetime_tr(report.newest_checked_at)}",
+    ]
+    if len(report.rows) <= row_limit:
+        lines.append("")
+        for row in report.rows:
+            lines.append(
+                f"{row.ordinal}. {row.domain} - Alınmış: {_taken_label(row.verified_status)}"
+                f" - Son geçerlilik: {format_date_tr(row.expiration_date)}"
+                f" - DNS: {_dns_label(row.nameservers)}"
+            )
+    else:
+        lines.extend(["", "Detaylı rapor için excel kullanın."])
     return "\n".join(lines)
 
 

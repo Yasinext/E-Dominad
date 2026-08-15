@@ -120,8 +120,28 @@ def test_render_general_text_report() -> None:
 
     assert "Genel rapor hazır." in text
     assert "Kök:" not in text
+    assert "Havuzdaki Domain Sayısı: 3" in text
     assert "BTK kontrollü: 2" in text
-    assert "BTK kontrol bekleyen: 1" in text
+    assert "BTK kontrol bekleyen:" not in text
+    assert "Kaynak: RDAP" not in text
+
+
+def test_render_general_text_report_uses_excel_hint_for_large_reports() -> None:
+    source = _report()
+    report = Report(
+        chat_id=source.chat_id,
+        root=None,
+        range_start=None,
+        range_end=None,
+        job_id="general",
+        finished_at=None,
+        report_filter=ReportFilter.ALL,
+        rows=source.rows,
+    )
+
+    text = render_text_report(report, row_limit=1)
+
+    assert "Detaylı rapor için excel kullanın." in text
 
 
 def test_render_expiration_report_includes_ordered_rows() -> None:
