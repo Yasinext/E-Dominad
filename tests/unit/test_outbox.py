@@ -77,7 +77,12 @@ def test_render_watch_newly_registered_message() -> None:
         {"domains": ["test1.com", "test2.com"], "total_count": 2},
     )
 
-    assert text == "Takip edilen domainlerde yeni kayıt var.\nToplam: 2\ntest1.com\ntest2.com"
+    assert text == (
+        "Takip edilen domainlerde yeni kayıt mevcut.\n"
+        "Toplam: 2\n"
+        "test1.com\n"
+        "test2.com"
+    )
 
 
 def test_retry_delay_uses_exponential_backoff() -> None:

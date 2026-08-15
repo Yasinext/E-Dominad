@@ -61,9 +61,4 @@ def pool_delete_completed(
     deleted_count: int,
     deactivated_watch_count: int,
 ) -> str:
-    return (
-        "Havuz silme tamamlandı.\n"
-        f"İstenen: {requested_count}\n"
-        f"Silinen: {deleted_count}\n"
-        f"Pasife alınan takip: {deactivated_watch_count}"
-    )
+    return "Havuz silme tamamlandı.\nİlgili domainler temizlendi."

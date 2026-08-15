@@ -197,7 +197,7 @@ def _render_watch_newly_registered(payload: Mapping[str, object]) -> str:
     domains = payload.get("domains")
     domain_list = [str(item) for item in domains] if isinstance(domains, list) else []
     lines = [
-        "Takip edilen domainlerde yeni kayıt var.",
+        "Takip edilen domainlerde yeni kayıt mevcut.",
         f"Toplam: {_text(payload.get('total_count'))}",
     ]
     lines.extend(domain_list[:20])

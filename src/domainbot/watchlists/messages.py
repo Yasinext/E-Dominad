@@ -4,12 +4,7 @@ from domainbot.db.models import Watchlist
 
 
 def watch_added(total_count: int, frequency: str) -> str:
-    return (
-        "Takip eklendi.\n"
-        f"Frekans: {frequency}\n"
-        f"Toplam domain: {total_count}\n"
-        "Kontroller listeye yayılacak."
-    )
+    return "Takip eklendi.\n" f"Toplam domain: {total_count}"
 
 
 def watch_removed() -> str:

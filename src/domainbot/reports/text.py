@@ -18,6 +18,10 @@ def render_text_report(report: Report, row_limit: int) -> str:
         f"En yeni kontrol: {format_datetime_tr(report.newest_checked_at)}",
         "Kaynak: RDAP",
     ]
+    if report.root is None:
+        btk_checked = sum(1 for row in report.rows if row.btk_status is not None)
+        lines.insert(5, f"BTK kontrollü: {btk_checked}")
+        lines.insert(6, f"BTK kontrol bekleyen: {len(report.rows) - btk_checked}")
     if report.root is not None:
         lines.insert(1, f"Kök: {report.root}")
         lines.insert(2, f"Aralık: {report.range_start}-{report.range_end}")

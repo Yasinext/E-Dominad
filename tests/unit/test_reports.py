@@ -120,6 +120,8 @@ def test_render_general_text_report() -> None:
 
     assert "Genel rapor hazır." in text
     assert "Kök:" not in text
+    assert "BTK kontrollü: 2" in text
+    assert "BTK kontrol bekleyen: 1" in text
 
 
 def test_render_expiration_report_includes_ordered_rows() -> None:

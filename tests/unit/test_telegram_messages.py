@@ -59,9 +59,7 @@ def test_pool_btk_refresh_started_message() -> None:
 def test_pool_delete_completed_message() -> None:
     assert pool_delete_completed(5, 4, 1) == (
         "Havuz silme tamamlandı.\n"
-        "İstenen: 5\n"
-        "Silinen: 4\n"
-        "Pasife alınan takip: 1"
+        "İlgili domainler temizlendi."
     )
 
 
