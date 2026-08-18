@@ -189,8 +189,7 @@ def _render_scan_completed(payload: Mapping[str, object]) -> str:
         f"Aralık: {_text(payload.get('range_start'))}-{_text(payload.get('range_end'))}\n"
         f"Toplam: {_text(payload.get('total_count'))}\n"
         f"Kayıtlı: {_text(payload.get('registered_count'))}\n"
-        f"Registry kaydı bulunamadı: {_text(payload.get('not_found_count'))}\n"
-        f"Belirsiz: {_text(payload.get('unknown_count'))}"
+        f"Registry kaydı bulunamadı: {_text(payload.get('not_found_count'))}"
     )
 
 

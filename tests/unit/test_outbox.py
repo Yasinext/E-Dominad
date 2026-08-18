@@ -83,8 +83,7 @@ def test_render_range_completion_message() -> None:
         "Aralık: 1-3\n"
         "Toplam: 3\n"
         "Kayıtlı: 1\n"
-        "Registry kaydı bulunamadı: 1\n"
-        "Belirsiz: 1"
+        "Registry kaydı bulunamadı: 1"
     )
 
 
