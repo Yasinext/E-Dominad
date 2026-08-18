@@ -10,18 +10,14 @@ from domainbot.reports.formatting import format_date_tr, format_datetime_tr
 from domainbot.reports.types import Report, ReportRow
 
 HEADERS = [
-    "Sıra",
     "Domain",
-    "Alınmış mı",
     "Durum",
     "Son Geçerlilik Tarihi",
-    "DNS Var mı",
     "Nameserverlar",
     "Registrar",
     "Kayıt Tarihi",
     "Kontrol Zamanı",
     "BTK Durumu",
-    "Açıklama",
 ]
 
 
@@ -53,31 +49,19 @@ def _write_rows(sheet: Worksheet, rows: tuple[ReportRow, ...]) -> None:
     for row in rows:
         sheet.append(
             [
-                row.ordinal,
                 _excel_text(row.domain),
-                _excel_text(_taken_label(row.verified_status)),
                 _excel_text(_status_label(row.verified_status)),
                 _excel_text(format_date_tr(row.expiration_date)),
-                _excel_text(_dns_label(row)),
                 _excel_text(", ".join(row.nameservers)),
                 _excel_text(row.registrar_name),
                 _excel_text(format_date_tr(row.registration_date)),
                 _excel_text(format_datetime_tr(row.checked_at)),
                 _excel_text(_btk_label(row)),
-                _excel_text(_simple_explanation(row)),
             ]
         )
-    widths = [8, 32, 14, 28, 24, 12, 56, 36, 24, 28, 24, 72]
+    widths = [32, 28, 24, 56, 36, 24, 28, 24]
     for index, width in enumerate(widths, start=1):
         sheet.column_dimensions[chr(64 + index)].width = width
-
-
-def _taken_label(status: str | None) -> str:
-    if status == "REGISTERED":
-        return "Evet"
-    if status == "NOT_FOUND_IN_REGISTRY":
-        return "Registry kaydı yok"
-    return "Belirsiz"
 
 
 def _status_label(status: str | None) -> str:
@@ -86,24 +70,6 @@ def _status_label(status: str | None) -> str:
     if status == "NOT_FOUND_IN_REGISTRY":
         return "Registry kaydı bulunamadı"
     return "Belirsiz"
-
-
-def _dns_label(row: ReportRow) -> str:
-    if row.nameservers:
-        return "Evet"
-    if row.verified_status == "REGISTERED":
-        return "Hayır"
-    return "-"
-
-
-def _simple_explanation(row: ReportRow) -> str:
-    if row.verified_status == "REGISTERED":
-        if row.nameservers:
-            return "Domain kayıtlı; registry tarafında nameserver bilgisi var."
-        return "Domain kayıtlı; registry tarafında nameserver bilgisi görünmüyor."
-    if row.verified_status == "NOT_FOUND_IN_REGISTRY":
-        return "Registry kaydı bulunamadı; satın alınabilirlik ayrıca doğrulanmalıdır."
-    return "Kontrol sonucu belirsiz."
 
 
 def _btk_label(row: ReportRow) -> str:

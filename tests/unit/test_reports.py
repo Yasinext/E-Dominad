@@ -159,16 +159,22 @@ def test_write_excel_report_creates_expected_sheets(tmp_path) -> None:  # type: 
 
     workbook = load_workbook(path)
     assert workbook.sheetnames == ["Genel Rapor"]
-    assert workbook["Genel Rapor"]["B2"].value == "test1.com"
-    assert workbook["Genel Rapor"]["C2"].value == "Evet"
-    assert workbook["Genel Rapor"]["E2"].value == "18.02.2027"
-    assert workbook["Genel Rapor"]["F2"].value == "Evet"
-    assert workbook["Genel Rapor"]["K2"].value == "Engelsiz"
-    assert workbook["Genel Rapor"]["L2"].value == (
-        "Domain kayıtlı; registry tarafında nameserver bilgisi var."
-    )
-    assert workbook["Genel Rapor"]["K3"].value == "Domain kayıtlı değil"
-    assert workbook["Genel Rapor"]["K4"].value == "Engelsiz"
+    assert [cell.value for cell in workbook["Genel Rapor"][1]] == [
+        "Domain",
+        "Durum",
+        "Son Geçerlilik Tarihi",
+        "Nameserverlar",
+        "Registrar",
+        "Kayıt Tarihi",
+        "Kontrol Zamanı",
+        "BTK Durumu",
+    ]
+    assert workbook["Genel Rapor"]["A2"].value == "test1.com"
+    assert workbook["Genel Rapor"]["B2"].value == "Kayıtlı"
+    assert workbook["Genel Rapor"]["C2"].value == "18.02.2027"
+    assert workbook["Genel Rapor"]["H2"].value == "Engelsiz"
+    assert workbook["Genel Rapor"]["H3"].value == "Domain kayıtlı değil"
+    assert workbook["Genel Rapor"]["H4"].value == "Engelsiz"
 
 
 def test_safe_report_filename_sanitizes_root() -> None:
