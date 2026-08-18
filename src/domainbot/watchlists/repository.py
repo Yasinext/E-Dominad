@@ -11,7 +11,7 @@ from domainbot.db.models import ScanJob, Watchlist
 from domainbot.domain.range_generator import generate_range_domains
 from domainbot.jobs.planner import ScanJobPlan
 from domainbot.jobs.repository import ScanJobRepository
-from domainbot.jobs.types import ScanJobType
+from domainbot.jobs.types import ScanJobStatus, ScanJobType
 
 
 @dataclass(frozen=True)
@@ -103,9 +103,15 @@ class WatchlistRepository:
         watchlist: Watchlist,
         batch_size: int,
         now: datetime | None = None,
-    ) -> ScanJob:
+    ) -> ScanJob | None:
         run_at = now or datetime.now(UTC)
         plan = _batch_plan(watchlist, batch_size)
+        existing_job = await self._active_scan_job(session, watchlist.chat_id, plan)
+        if existing_job is not None:
+            watchlist.next_run_at = run_at + timedelta(minutes=5)
+            watchlist.updated_at = run_at
+            return None
+
         job = await ScanJobRepository().create_scan_job(
             session=session,
             plan=plan,
@@ -117,7 +123,7 @@ class WatchlistRepository:
         cursor = _next_cursor(watchlist, batch_size)
         watchlist.scan_cursor = cursor
         watchlist.last_run_at = run_at
-        watchlist.next_run_at = run_at + timedelta(days=1)
+        watchlist.next_run_at = _next_run_at(run_at, watchlist.frequency)
         watchlist.updated_at = run_at
         return job
 
@@ -142,6 +148,26 @@ class WatchlistRepository:
                 Watchlist.range_end == plan.range_end,
             )
         return cast(Watchlist | None, await session.scalar(statement.limit(1)))
+
+    async def _active_scan_job(
+        self,
+        session: AsyncSession,
+        chat_id: int,
+        plan: ScanJobPlan,
+    ) -> ScanJob | None:
+        statement = select(ScanJob).where(
+            ScanJob.chat_id == chat_id,
+            ScanJob.status.in_((ScanJobStatus.QUEUED.value, ScanJobStatus.RUNNING.value)),
+        )
+        if plan.single_domain:
+            statement = statement.where(ScanJob.single_domain == plan.single_domain)
+        else:
+            statement = statement.where(
+                ScanJob.root == plan.root,
+                ScanJob.range_start == plan.range_start,
+                ScanJob.range_end == plan.range_end,
+            )
+        return cast(ScanJob | None, await session.scalar(statement.limit(1)))
 
 
 def _batch_plan(watchlist: Watchlist, batch_size: int) -> ScanJobPlan:
@@ -176,3 +202,9 @@ def _next_cursor(watchlist: Watchlist, batch_size: int) -> int | None:
     if next_cursor > watchlist.range_end:
         return watchlist.range_start
     return next_cursor
+
+
+def _next_run_at(run_at: datetime, frequency: str) -> datetime:
+    if frequency == "haftalik":
+        return run_at + timedelta(days=7)
+    return run_at + timedelta(days=1)
