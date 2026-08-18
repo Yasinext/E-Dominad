@@ -27,7 +27,7 @@ def test_render_single_registered_completion_message() -> None:
         "Sorgu tamamlandı.\n"
         "Domain: example.com\n"
         "Durum: Kayıtlı\n"
-        "Kontrol: 2026-07-30T12:00:00+00:00"
+        "Kontrol: 30.07.2026 15:00:00"
     )
 
 
@@ -44,6 +44,23 @@ def test_render_single_not_found_completion_message() -> None:
     )
 
     assert "Durum: Registry kaydı bulunamadı" in text
+    assert "Kontrol: 30.07.2026 15:00:00" in text
+
+
+def test_render_single_unknown_completion_message_is_simplified() -> None:
+    text = render_outbox_message(
+        "scan_completed",
+        {
+            "single_domain": "unknown-example.com",
+            "registered_count": 0,
+            "not_found_count": 0,
+            "unknown_count": 1,
+            "finished_at": "2026-07-30T12:00:00+00:00",
+        },
+    )
+
+    assert "Durum: Registry kaydı bulunamadı" in text
+    assert "Belirsiz" not in text
 
 
 def test_render_range_completion_message() -> None:

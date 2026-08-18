@@ -13,6 +13,7 @@ from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from domainbot.db.models import TelegramOutbox
+from domainbot.reports.formatting import format_datetime_tr
 
 
 class OutboxStatus(StrEnum):
@@ -180,7 +181,7 @@ def _render_scan_completed(payload: Mapping[str, object]) -> str:
             "Sorgu tamamlandı.\n"
             f"Domain: {single_domain}\n"
             f"Durum: {_single_status(payload)}\n"
-            f"Kontrol: {_text(payload.get('finished_at'))}"
+            f"Kontrol: {_finished_at(payload.get('finished_at'))}"
         )
     return (
         "Sorgu tamamlandı.\n"
@@ -209,9 +210,18 @@ def _render_watch_newly_registered(payload: Mapping[str, object]) -> str:
 def _single_status(payload: Mapping[str, object]) -> str:
     if _int(payload.get("registered_count")) == 1:
         return "Kayıtlı"
-    if _int(payload.get("not_found_count")) == 1:
-        return "Registry kaydı bulunamadı"
-    return "Belirsiz"
+    return "Registry kaydı bulunamadı"
+
+
+def _finished_at(value: object) -> str:
+    if isinstance(value, datetime):
+        return format_datetime_tr(value)
+    if value is None:
+        return "-"
+    try:
+        return format_datetime_tr(datetime.fromisoformat(str(value)))
+    except ValueError:
+        return str(value)
 
 
 def _text(value: object) -> str:
