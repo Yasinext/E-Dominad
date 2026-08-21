@@ -192,10 +192,18 @@ async def handle_message(
         return
 
     if parsed.command_type == CommandType.POOL_BTK_REFRESH:
+        user = message.from_user
+        if user is None:
+            await message.answer(command_not_ready())
+            return
         pool_service = PoolRefreshService()
         async with session_factory() as session:
             async with session.begin():
-                btk_result = await pool_service.enqueue_btk_refresh(session)
+                btk_result = await pool_service.enqueue_btk_refresh(
+                    session=session,
+                    chat_id=message.chat.id,
+                    requested_by=user.id,
+                )
         await message.answer(
             pool_btk_refresh_started(btk_result.domain_count, btk_result.already_running)
         )

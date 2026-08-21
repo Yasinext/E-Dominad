@@ -171,6 +171,10 @@ def render_outbox_message(message_type: str, payload: Mapping[str, object]) -> s
         return _render_scan_completed(payload)
     if message_type == "watch_newly_registered":
         return _render_watch_newly_registered(payload)
+    if message_type == "pool_domain_refresh_completed":
+        return "Havuz Domain Güncel"
+    if message_type == "pool_btk_refresh_completed":
+        return "Havuz BTK Güncel"
     return "Bildirim hazır."
 
 

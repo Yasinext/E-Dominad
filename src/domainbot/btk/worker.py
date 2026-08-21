@@ -68,12 +68,20 @@ class BtkWorker:
             )
             domains = tuple(domain.domain for domain in pending)
         if not domains:
+            async with self.session_factory() as session:
+                async with session.begin():
+                    completed_count = await self.repository.complete_refresh_notifications_if_ready(
+                        session
+                    )
+            if completed_count:
+                return True
             return False
 
         results = await self.scanner.scan(domains)
         async with self.session_factory() as session:
             async with session.begin():
                 await self.repository.record_results(session, results)
+                await self.repository.complete_refresh_notifications_if_ready(session)
         await asyncio.sleep(self.settings.batch_sleep_seconds)
         return True
 

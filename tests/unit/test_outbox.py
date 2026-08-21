@@ -101,6 +101,11 @@ def test_render_watch_newly_registered_message() -> None:
     )
 
 
+def test_render_pool_refresh_completion_messages() -> None:
+    assert render_outbox_message("pool_domain_refresh_completed", {}) == "Havuz Domain Güncel"
+    assert render_outbox_message("pool_btk_refresh_completed", {}) == "Havuz BTK Güncel"
+
+
 def test_retry_delay_uses_exponential_backoff() -> None:
     message = TelegramOutbox(
         id=1,

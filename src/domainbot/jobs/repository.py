@@ -323,7 +323,7 @@ async def _completion_outbox(
     if job.job_type == "watch":
         return await _watch_completed_outbox(session, job, now)
     if job.job_type == "pool_refresh":
-        return None
+        return await _pool_refresh_completed_outbox(session, job, now)
     return _scan_completed_outbox(job, now)
 
 
@@ -379,6 +379,37 @@ async def _watch_completed_outbox(
             "finished_at": now.isoformat(),
         },
         idempotency_key=f"watch_newly_registered:{job.id}",
+        status="pending",
+        next_attempt_at=now,
+        created_at=now,
+    )
+
+
+async def _pool_refresh_completed_outbox(
+    session: AsyncSession,
+    job: ScanJob,
+    now: datetime,
+) -> TelegramOutbox | None:
+    unfinished_count = await session.scalar(
+        select(func.count())
+        .select_from(ScanJob)
+        .where(
+            ScanJob.chat_id == job.chat_id,
+            ScanJob.job_type == "pool_refresh",
+            ScanJob.created_at == job.created_at,
+            ScanJob.status != ScanJobStatus.COMPLETED.value,
+        )
+    )
+    if int(unfinished_count or 0) > 0:
+        return None
+    return TelegramOutbox(
+        chat_id=job.chat_id,
+        message_type="pool_domain_refresh_completed",
+        payload={
+            "created_at": job.created_at.isoformat(),
+            "finished_at": now.isoformat(),
+        },
+        idempotency_key=f"pool_domain_refresh_completed:{job.chat_id}:{job.created_at.isoformat()}",
         status="pending",
         next_attempt_at=now,
         created_at=now,

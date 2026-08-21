@@ -81,11 +81,25 @@ class PoolRefreshService:
             job_count += 1
         return PoolRefreshResult(domain_count=len(domains), job_count=job_count)
 
-    async def enqueue_btk_refresh(self, session: AsyncSession) -> PoolBtkRefreshResult:
+    async def enqueue_btk_refresh(
+        self,
+        session: AsyncSession,
+        chat_id: int,
+        requested_by: int,
+        now: datetime | None = None,
+    ) -> PoolBtkRefreshResult:
         active_count = await self._active_btk_refresh_count(session)
         if active_count:
+            await self._ensure_btk_refresh_tracker(
+                session,
+                chat_id,
+                requested_by,
+                active_count,
+                now,
+            )
             return PoolBtkRefreshResult(domain_count=active_count, already_running=True)
 
+        updated_at = now or datetime.now(UTC)
         result = await session.execute(
             update(Domain)
             .where(
@@ -97,11 +111,20 @@ class PoolRefreshService:
                 btk_checked_at=None,
                 btk_note=None,
                 btk_error=None,
-                updated_at=datetime.now(UTC),
+                updated_at=updated_at,
             )
         )
         cursor_result = cast(CursorResult[object], result)
-        return PoolBtkRefreshResult(domain_count=int(cursor_result.rowcount or 0))
+        domain_count = int(cursor_result.rowcount or 0)
+        if domain_count > 0:
+            await self._ensure_btk_refresh_tracker(
+                session,
+                chat_id,
+                requested_by,
+                domain_count,
+                updated_at,
+            )
+        return PoolBtkRefreshResult(domain_count=domain_count)
 
     async def delete_domains(
         self,
@@ -188,6 +211,40 @@ class PoolRefreshService:
             )
         )
         return int(count or 0)
+
+    async def _ensure_btk_refresh_tracker(
+        self,
+        session: AsyncSession,
+        chat_id: int,
+        requested_by: int,
+        total_count: int,
+        now: datetime | None = None,
+    ) -> None:
+        existing = await session.scalar(
+            select(ScanJob)
+            .where(
+                ScanJob.chat_id == chat_id,
+                ScanJob.job_type == "btk_refresh",
+                ScanJob.status == ScanJobStatus.RUNNING.value,
+            )
+            .limit(1)
+        )
+        if existing is not None:
+            return
+
+        created_at = now or datetime.now(UTC)
+        session.add(
+            ScanJob(
+                chat_id=chat_id,
+                requested_by=requested_by,
+                job_type="btk_refresh",
+                total_count=total_count,
+                status=ScanJobStatus.RUNNING.value,
+                priority=300,
+                created_at=created_at,
+                started_at=created_at,
+            )
+        )
 
     async def _deactivate_matching_single_watchlists(
         self,
